@@ -152,28 +152,32 @@ module Grape
           doc_attrs[:default] = default
         end
 
+        if allowable_values = validations[:allowable_values]
+					doc_attrs[:allowable_values] = allowable_values
+        end
+
         full_attrs = attrs.collect{ |name| { :name => name, :full_name => full_name(name)} }
         @api.document_attribute(full_attrs, doc_attrs)
 
         # Validate for presence before any other validators
         if validations.has_key?(:presence) && validations[:presence]
-          validate('presence', validations[:presence], attrs, doc_attrs)
+          add_validator('presence', validations[:presence], attrs, doc_attrs)
         end
 
         # Before we run the rest of the validators, lets handle
         # whatever coercion so that we are working with correctly
         # type casted values
         if validations.has_key? :coerce
-          validate('coerce', validations[:coerce], attrs, doc_attrs)
+          add_validator('coerce', validations[:coerce], attrs, doc_attrs)
           validations.delete(:coerce)
         end
 
         validations.each do |type, options|
-          validate(type, options, attrs, doc_attrs)
+          add_validator(type, options, attrs, doc_attrs)
         end
       end
 
-      def validate(type, options, attrs, doc_attrs)
+      def add_validator(type, options, attrs, doc_attrs)
         validator_class = Validations::validators[type.to_s]
 
         if validator_class
